@@ -1,18 +1,20 @@
 #include <iostream>
 #include <vector>
+#include <iomanip>
 
 using std::cout;
+using std::setw;
 using std::vector;
 using namespace std::chrono;
 
 
 #define DUPLICATION(x) x x
-#define ARRAY_SIZE 100
 #define MIN_SHIFT 10
-#define MAX_SHIFT 24
+#define MAX_SHIFT 28
 #define NUMBER_OF_TESTS 16
-#define NUMBER_OF_TESTS_IN_ONE_ITERATION 2048
+#define NUMBER_OF_TESTS_IN_ONE_ITERATION 16
 #define NUMBER_OF_STEPS 256
+#define COUNT_OF_OUTPUT_CHARACTERS 10
 
 template <size_t N>
 struct el {
@@ -37,7 +39,7 @@ void test();
 int main(int argc, char** argv) {
     srand((unsigned int) time(NULL));
 
-    test<100>();
+    test<31>();
     return 0;
 }
 
@@ -52,12 +54,13 @@ void create_linear_sequence(vector<el<N>> &elements) {
 template <size_t N>
 void create_random_sequence(vector<el<N>> &elements) {
     for(int i = 0; i < elements.size(); i++) {
-        elements[i].next = &elements[rand() % (ARRAY_SIZE - 1)];
+        elements[i].next = &elements[rand() % (elements.size() - 1)];
     }
 }
 
 template <size_t N>
-double test_cache(el<N> *element) {
+double test_cache(el<N> *first_element) {
+    auto element = first_element;
     long t_start = duration_cast<nanoseconds>(steady_clock::now().time_since_epoch()).count();
     for (int i = 0; i < NUMBER_OF_TESTS_IN_ONE_ITERATION; i++) {
         DUPLICATION(
@@ -68,7 +71,7 @@ double test_cache(el<N> *element) {
                                                 DUPLICATION(
                                                         DUPLICATION(
                                                                 DUPLICATION(
-                                element->next = element;
+                                element = element->next;
         ))))))))
     }
     long t_stop = duration_cast<nanoseconds>(steady_clock::now().time_since_epoch()).count();
@@ -81,20 +84,23 @@ template <size_t N>
 void test() {
     for (unsigned i = MIN_SHIFT; i <= MAX_SHIFT; i++) {
         size_t el_size = sizeof(el<N>);
-        unsigned long array_size = ((unsigned long) 1 << i);
+        unsigned long array_size = ((unsigned long) 1 << i) / el_size;
         vector<el<N>> elements(array_size);
         double linear_sum_time = 0;
         double random_sum_time = 0;
-        create_linear_sequence(elements);
-
 
         for (int j = 0; j < NUMBER_OF_TESTS; j++) {
+            create_linear_sequence(elements);
             linear_sum_time += test_cache(&elements[0]);
-            //
-            //create_random_sequence(elements);
-            //random_sum_time += test_cache(&elements[0]);
         }
-        cout << linear_sum_time / double(NUMBER_OF_TESTS) << " : ";
-        cout << random_sum_time / double(NUMBER_OF_TESTS) << "\n";
+        //
+        for (int j = 0; j < NUMBER_OF_TESTS; j++) {
+            create_random_sequence(elements);
+            random_sum_time += test_cache(&elements[0]);
+        }
+        cout << setw(COUNT_OF_OUTPUT_CHARACTERS) << i;
+        cout << setw(COUNT_OF_OUTPUT_CHARACTERS) << linear_sum_time / double(NUMBER_OF_TESTS);
+        cout << setw(COUNT_OF_OUTPUT_CHARACTERS) << random_sum_time / double(NUMBER_OF_TESTS);
+        cout << std::endl;
     }
 }
