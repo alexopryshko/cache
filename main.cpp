@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <iomanip>
+#include <sys/stat.h>
 
 using std::cout;
 using std::setw;
@@ -38,8 +39,13 @@ void test();
 
 int main(int argc, char** argv) {
     srand((unsigned int) time(NULL));
+    freopen("/Users/alexander/Development/cache/result.txt","w", stdout);
 
+    test<0>();
+    test<7>();
+    test<15>();
     test<31>();
+
     return 0;
 }
 
@@ -79,8 +85,17 @@ double test_cache(el<N> *first_element) {
     return duration;
 }
 
+void print_stat(vector<double> &stat) {
+    for (int i = 0; i < stat.size(); i++) {
+        cout << stat[i] << std::endl;
+    }
+}
+
 template <size_t N>
 void test() {
+    cout << std::endl << "NPAD: " << N << std::endl;
+    vector<double> liner_stat;
+    vector<double> random_stat;
     for (unsigned i = MIN_SHIFT; i <= MAX_SHIFT; i++) {
         size_t el_size = sizeof(el<N>);
         unsigned long array_size = ((unsigned long) 1 << i) / el_size;
@@ -97,9 +112,17 @@ void test() {
             create_random_sequence(elements);
             random_sum_time += test_cache(&elements[0]);
         }
-        cout << setw(COUNT_OF_OUTPUT_CHARACTERS) << i;
-        cout << setw(COUNT_OF_OUTPUT_CHARACTERS) << linear_sum_time / double(NUMBER_OF_TESTS);
-        cout << setw(COUNT_OF_OUTPUT_CHARACTERS) << random_sum_time / double(NUMBER_OF_TESTS);
-        cout << std::endl;
+        double liner_time = linear_sum_time / double(NUMBER_OF_TESTS);
+        double random_time = random_sum_time / double(NUMBER_OF_TESTS);
+        //cout /*<< setw(COUNT_OF_OUTPUT_CHARACTERS)*/ << i << " ";
+        //cout /*<< setw(COUNT_OF_OUTPUT_CHARACTERS)*/ << liner_time << " ";
+        //cout /*<< setw(COUNT_OF_OUTPUT_CHARACTERS)*/ << random_time;
+        //cout << std::endl;
+        liner_stat.push_back(liner_time);
+        random_stat.push_back(random_time);
     }
+    print_stat(liner_stat);
+    cout << std::endl;
+    print_stat(random_stat);
+
 }
